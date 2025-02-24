@@ -1,0 +1,208 @@
+---
+title: "The Effect of Vitamin C on Tooth Growth in Guinea Pigs:Basic Inferential Analysis"
+author: "Kaung Myat Khant"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document:
+    keep_md: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE)
+```
+
+## Overview
+
+The effect of vitamin C on tooth growth was examined in the guinea pigs. The length of odontoblasts were compared between two groups, vitamin C and orange juice. The tooth growth was also compared between vitamin C or orange juice doses of 0.5, 1 and 2 mg.
+
+## Introduction
+
+Odontoblasts are responsible for the growth of tooth in animals.Vitamin C (Ascorbic acid) is believed to have effect on tooth growth. In this study, we compare the length of tooth growth in guinea pigs that received one of the two vitamin C supplements, ascorbic acid(pure vitamin C) and orange juice. The effect of vitamin C dosage level are also compared.
+
+## Methods
+
+The data were from ToothGrowth data in R datasets package. The response is the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Each animal received one of three dose levels of vitamin C (0.5, 1, and 2 mg/day) by one of two delivery methods, orange juice or ascorbic acid (a form of vitamin C and coded as VC). The data were summarized using the five-point summary measures of central tendencies (mean/median) and spread (Standard deviation/ Interquartile range). The effect of the supplements and dosage levels on tooth growth were compare using Student t tests and presented in 95% confidence intervals.
+
+```{r loadData, include=TRUE}
+library(datasets)
+data <- ToothGrowth
+dim(data) # 60 observations with three variables
+sum(is.na(data)) # There were no missing values
+head(data) # see the data
+```
+
+## Results
+
+### Exploratory data analysis of length of growth by supplements
+
+```{r boxSupp, include=TRUE, fig.cap="Box-plot comparing the two supplements"}
+library(ggplot2)
+ggplot(data, aes(x = supp, y = len))+
+    geom_boxplot()+
+    labs(y = "Length of odontoblasts(mm)", x = "VC = Ascorbic acid, OJ = Orange juice")
+```
+
+The box-plot showed that the orange juice supplement (OJ) had longer length of odontoblasts than the ascorbic acid form.
+
+### Summary of length of growth by supplements
+
+```{r summSupp, include=TRUE}
+library(dplyr)
+data %>% 
+    group_by(supp) %>% 
+    summarise(
+        Mean = mean(len),
+        SD = sd(len),
+        Median = median(len),
+        Q1 = quantile(len, probs = 0.25),
+        Q3 = quantile(len, probs = 0.75),
+        Min = min(len),
+        Max = max(len)
+    ) %>% 
+    ungroup() %>% 
+    knitr::kable(col.names = c("Supplements","Mean","SD","Median","Q1","Q3","Min","Max"),
+                 digits = 2,
+                 caption = "Summary of tooth growth by supplements")
+```
+
+**Table 1** shows the summary of the data by supplement types. The growth for orange juice was 21mm (SD =6.6) and that of ascorbic acid form was 17mm (SD = 8.2).
+
+### Comparison of tooth growth between the two supplement groups
+
+```{r testSupp, include=TRUE}
+tSupp <- with(data, t.test(len ~ supp, alternative = "greater",
+                  paired = FALSE, var.equal = TRUE))
+data.frame(meanDiff = tSupp$estimate[1] - tSupp$estimate[2],t = tSupp$statistic, df =tSupp$parameter, CI = paste0(round(tSupp$conf.int[1],2),",",round(tSupp$conf.int[2],2)),pValue = tSupp$p.value, row.names = NULL) %>% knitr::kable(
+    col.names = c("Mean difference","t-value","degree of freedom","95% CI","P value"),
+    digits = 4,
+    caption = "T test results for comparison of growth between two supplements"
+)
+```
+
+**Table 2** showed the student t test results of comparison between two supplements. Under the null hypothesis of no true difference in means between orange juice and vitamin C with 5% significant level, we have sufficient data to reject the null hypothesis. Thus, we can conclude that orange juice has more effect on tooth growth than vitamin C.
+
+### Exploratoroy data analysis of length of growth by dosage levels
+
+```{r boxDose, include=TRUE, fig.cap="Box-plot comparing the three dosage levels"}
+library(ggplot2)
+ggplot(data, aes(x = factor(dose), y = len))+
+    geom_boxplot()+
+    labs(y = "Length of odontoblasts(mm)", x = "Dose level(mg/day)")
+```
+
+The box-plot showed that the higher the dosage, the higher the length.
+
+### Summary of length of growth by dose levels
+
+```{r summDose, include=TRUE}
+library(dplyr)
+data %>% 
+    group_by(factor(dose)) %>% 
+    summarise(
+        Mean = mean(len),
+        SD = sd(len),
+        Median = median(len),
+        Q1 = quantile(len, probs = 0.25),
+        Q3 = quantile(len, probs = 0.75),
+        Min = min(len),
+        Max = max(len)
+    ) %>% 
+    ungroup() %>% 
+    knitr::kable(col.names = c("Dose levels","Mean","SD","Median","Q1","Q3","Min","Max"),
+                 digits = 2,
+                 caption = "Summary of tooth growth by dose levels")
+```
+
+**Table 3** shows the summary of the data by dose levels. The growth for 0.5mg/day, 1mg/day and 2mg/day were 11mm (SD = 4.5), 20mm (SD = ) and 26mm (SD=3.8), respectively.
+
+### Comparision of tooth growth among the dose levels
+
+```{r level1vs2, include=TRUE}
+t.test(
+    x = data[data$dose==0.5, "len"],
+    y = data[data$dose==1, "len"],
+    paired = FALSE,
+    var.equal = TRUE,
+    alternative = "less"
+)
+```
+
+The test results showed that we can reject the null hypothesis of no true difference between dose level 0.5 mg/day and 1 mg/day with 5% significant level. Thus, we can conclude that dose level 1mg/day had higher growth than the 0.5mg/day (P value \< 0.001).
+
+```{r level1vs3, include=TRUE}
+t.test(
+    x = data[data$dose==0.5, "len"],
+    y = data[data$dose==2, "len"],
+    paired = FALSE,
+    var.equal = TRUE,
+    alternative = "less"
+)
+```
+
+The test results showed that we can reject the null hypothesis of no true difference between dose level 0.5 mg/day and 2 mg/day with 5% significant level. Thus, we can conclude that dose level 2mg/day had higher growth than the 0.5mg/day (P value \< 0.001).
+
+```{r level2vs3, include=TRUE}
+t.test(
+    x = data[data$dose==1, "len"],
+    y = data[data$dose==2, "len"],
+    paired = FALSE,
+    var.equal = TRUE,
+    alternative = "less"
+)
+```
+
+The test results showed that we can reject the null hypothesis of no true difference between dose level 1 mg/day and 2 mg/day with 5% significant level. Thus, we can conclude that dose level 2mg/day had higher growth than the 1mg/day (P value \< 0.001).
+
+```{r padjust, include=TRUE}
+p.adjust(c(6.342e-08, 2.199e-14, 9.532e-06), method = "bonf")
+```
+
+The adjusted p values with Bonferroni's adjustment are also very small.
+
+```{r anova,include=TRUE}
+aov <- aov(len ~ dose, data)
+summary(aov)
+oneway.test(len ~ dose, data, var.equal = TRUE)
+pairwise.t.test(data$len, factor(data$dose), p.adjust.method = "bonf", paired = FALSE, alternative = "greater")
+```
+
+Analysis of variance also showed the same results.
+
+## Conclusion
+
+We can conclude that the orange juice (natural supplement) had greater effect on tooth growth than the ascorbic acid form of vitamin C. Also, the higher the vitamin C doses, the longer the length of odontoblasts.
+
+### Assumptions
+
+In our analysis, we have the following assumptions on our data:
+
+-   The data were independent and identically distributed.
+
+-   The data were normally distributed across each group.
+
+-   The variance in each group were homogeneous
+
+```{r normal, include=TRUE}
+shapiro.test(data$len)
+shapiro.test(data[data$supp=="OJ", "len"])
+shapiro.test(data[data$supp=="VC", "len"])
+shapiro.test(data[data$dose==0.5, "len"])
+shapiro.test(data[data$dose==1, "len"])
+shapiro.test(data[data$dose==2, "len"])
+```
+
+Testing the normality with Shapiro-Wilk normality test at 1% significant level, the data were normally distributed across each group.
+
+```{r homovar, include=TRUE}
+var.test(data[data$supp=="OJ", "len"],data[data$supp=="VC", "len"])
+var.test(data[data$dose==0.5, "len"],data[data$dose==1, "len"])
+var.test(data[data$dose==0.5, "len"],data[data$dose==2, "len"])
+var.test(data[data$dose==2, "len"],data[data$dose==1, "len"])
+
+```
+
+Comparing the variance across each group using F test at 5% significant level, there is homogeneity of variance across each groups.
+
+Since the assumptions were met, we can conclude that our findings are robust and orange juice with higher dose of vitamin C had greater effect on tooth growth than ascorbic acid form. Orange juice could be a good nutrient for tooth growth.

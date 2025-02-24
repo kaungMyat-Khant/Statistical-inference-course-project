@@ -1,0 +1,90 @@
+---
+title: "Simulation Exercise with Exponential distribution"
+author: "Kaung Myat Khant"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    keep_md: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE,
+                      message = FALSE)
+```
+
+## Overview
+
+In this exercise, there will be a demonstration of a simulation of a distribution of a small sample to approximate the population parameter. And the demonstration will use an exponential distribution.
+
+## Simulation
+
+Here, we will let the lambda (rate parameter of the distribution) be 0.2. For an exponential distribution, *mean = Standard deviation = 1/lambda*. Let's set the lambda = 0.2 for all the simulation and we will simulate the average of 40 exponential samples a thousand time.
+
+```{r simulation, include=TRUE}
+lambda <- 0.2
+n <- 40
+set.seed(123) # for reproducibility
+sim_vec <- NULL # A NULL vector to loop the simulation
+for (i in 1:1000) { # loop for thousand time
+    sim_vec <- c(sim_vec, mean(rexp(n, rate = lambda))) # average of exponential samples
+}
+head(sim_vec) # see the simulation
+```
+
+The distribution of simulated data of 1000 are shown in the following histogram.
+
+```{r histogram, include=TRUE}
+hist(sim_vec, 
+     main = "Distribution of the simulated data", 
+     xlab = "Sample means",
+     col = "maroon")
+```
+
+## Sample mean versus Theorectical mean
+
+```{r means, include=TRUE}
+## Calculate the means
+sample_mean <- mean(sim_vec)
+theoretical_mean <- 1/lambda
+```
+
+Here:\
+- The sample mean from average of 1000 simulation is `r round(sample_mean)`\
+- Theoretical mean = `r round(theoretical_mean)`.\
+You can see that the sample mean is equal to theoretical mean.
+
+```{r meanComparison,include=TRUE}
+par(mfrow = c(1,2), mar = c(5,2,2,2))
+hist(sim_vec, main = "Sample mean", xlab = "Sample mean", col = "grey80")
+abline(v = sample_mean, lwd = 2.5, lty= 1, col = "navy")
+hist(rexp(40,0.2), main = "Theoretical mean", xlab = "Exponential samples", col = "grey80")
+abline(v = theoretical_mean, lwd = 2.5, lty= 2, col = "darkgreen")
+```
+
+## Sample Variance vs Theoretical Variance
+
+```{r variances, include=TRUE}
+sample_variance <- var(sim_vec) # sample standard deviation
+theoretical_variance <- 1/lambda^2/n # theoretical standard deviation
+```
+
+-   Sample variance = `r sample_variance`\
+-   Theoretical variance = `r theoretical_variance`\
+    Both the sample variance and theoretical variance are approximately `r round(sample_variance,1)`
+
+## Distribution
+
+We will see if the distribution of simulated sample means are normal through visualization.
+
+```{r visualization, include=TRUE, fig.cap="Probabilty density function of the sample means with normal density curve"}
+x <- seq(min(sim_vec), max(sim_vec), length.out = 100)
+y <- dnorm(x, mean(sim_vec), sd(sim_vec))
+hist(sim_vec, breaks = 100, freq = FALSE, axes = FALSE,
+     main = "Probability density funtion of the sample means",
+     xlab = "Sample mean")
+lines(x,y, col = "blue", lwd = 2)
+```
+
+The figure shows that the sample means are distributed normally.  
+
